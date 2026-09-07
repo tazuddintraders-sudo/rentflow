@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}Payment History · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <a href="{% url 'payments:main' %}">Payment Centre</a><span class="sep">/</span>
+  <span class="current">Payment History</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Payment History</h1>
+    <div class="sub">{{ count }} record{{ count|pluralize }} in the current view</div>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--accent" href="{% url 'payments:make_payment' %}"><svg><use href="#i-plus"/></svg> New Payment</a>
+  </div>
+</div>
+
+<!-- Analytics -->
+<section class="grid grid--4 mb-6 animate-in">
+  <div class="stat">
+    <div class="stat__top"><span class="stat__label">Total in view</span>
+      <span class="stat__icon"><svg><use href="#i-wallet"/></svg></span></div>
+    <span class="stat__value">৳{{ total_amount|floatformat:0|intcomma }}</span>
+    <span class="stat__meta">All selected records</span>
+  </div>
+  <div class="stat">
+    <div class="stat__top"><span class="stat__label">Collected (paid)</span>
+      <span class="stat__icon stat__icon--green"><svg><use href="#i-check-circle"/></svg></span></div>
+    <span class="stat__value">৳{{ paid_amount|floatformat:0|intcomma }}</span>
+  </div>
+  <div class="stat">
+    <div class="stat__top"><span class="stat__label">Payments</span>
+      <span class="stat__icon stat__icon--accent"><svg><use href="#i-receipt"/></svg></span></div>
+    <span class="stat__value">{{ count }}</span>
+    <span class="stat__meta">records</span>
+  </div>
+  <div class="stat">
+    <div class="stat__top"><span class="stat__label">Average value</span>
+      <span class="stat__icon"><svg><use href="#i-trend"/></svg></span></div>
+    <span class="stat__value">৳{{ avg|floatformat:0|intcomma }}</span>
+    <span class="stat__meta">per payment</span>
+  </div>
+</section>
+
+<div class="card animate-in">
+  <form method="get" class="filterbar">
+    <div class="field search">
+      <label>Search</label>
+      <div style="position:relative">
+        <input class="input" type="search" name="q" value="{{ filters.q }}"
+               placeholder="Occupant, flat, ID or invoice no…" style="padding-left:36px">
+        <svg style="position:absolute;left:11px;top:11px;width:16px;height:16px;color:var(--ink-400)"><use href="#i-search"/></svg>
+      </div>
+    </div>
+    <div class="field"><label>Building</label>
+      <select class="input" name="building">
+        <option value="">All</option>
+        {% for b in buildings %}<option value="{{ b.id }}" {% if filters.building == b.id|stringformat:"s" %}selected{% endif %}>{{ b.building_no }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>Status</label>
+      <select class="input" name="status">
+        <option value="">All</option>
+        {% for val, label in statuses %}<option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>Method</label>
+      <select class="input" name="method">
+        <option value="">All</option>
+        {% for val, label in methods %}<option value="{{ val }}" {% if filters.method == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label>From</label><input class="input" type="date" name="from" value="{{ filters.from }}"></div>
+    <div class="field"><label>To</label><input class="input" type="date" name="to" value="{{ filters.to }}"></div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <div class="row">
+        <button class="btn btn--primary btn--sm" type="submit"><svg><use href="#i-search"/></svg> Filter</button>
+        <a class="btn btn--ghost btn--sm" href="{% url 'payments:manage' %}">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Invoice</th><th>Occupant</th><th>Unit</th><th>Period</th>
+          <th class="num">Rent</th><th>Date</th><th>Method</th>
+          <th>Mobile</th><th>Email</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+          <tr class="clickable" data-payment-row="{{ p.id }}">
+            <td class="cell-sub">{{ p.invoice_number_display }}</td>
+            <td class="cell-strong">{{ p.occupancy.occupant.name }}</td>
+            <td class="cell-sub">{{ p.occupancy.flat.building.building_no }} · {{ p.occupancy.flat.flat_no }}</td>
+            <td class="cell-sub">{{ p.month_label }}</td>
+            <td class="num cell-strong mono">৳{{ p.amount|floatformat:0|intcomma }}</td>
+            <td class="cell-sub">{{ p.payment_date|date:"d M Y" }}</td>
+            <td class="cell-sub">{{ p.get_method_display }}</td>
+            <td class="cell-sub">{{ p.occupancy.occupant.phone }}</td>
+            <td class="cell-sub">{{ p.occupancy.occupant.email|default:"—" }}</td>
+            <td><span class="badge badge--{{ p.status }}">{{ p.get_status_display }}</span></td>
+            <td class="num"><span class="btn-icon"><svg><use href="#i-eye"/></svg></span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="11" class="table-empty">
+            <svg style="margin:0 auto 8px"><use href="#i-credit"/></svg>
+            No payments match these filters.
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/payment-details.js' %}"></script>
+{% endblock %}

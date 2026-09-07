@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Buildings & Units · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <span class="current">Buildings &amp; Units</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Buildings &amp; Units</h1>
+    <div class="sub">Manage your buildings, levels and flats, shops and cottages</div>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn btn--ghost" data-open-modal="addBuilding"><svg><use href="#i-building"/></svg> New Building</button>
+    <a class="btn btn--primary" href="{% url 'properties:flat_create' %}"><svg><use href="#i-plus"/></svg> Add Unit</a>
+  </div>
+</div>
+
+<div class="grid grid--cards mb-6">
+  {% for b in buildings %}
+    <div class="card animate-in">
+      <div style="height:90px;overflow:hidden;background:var(--navy-700);position:relative;border-radius:10px 10px 0 0">
+        {% if b.photo %}<img src="{{ b.photo.url }}" style="width:100%;height:100%;object-fit:cover" alt="">
+        {% else %}
+          <span style="position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.7)">
+            <svg style="width:30px;height:30px"><use href="#i-building"/></svg>
+          </span>{% endif %}
+      </div>
+      <div class="card__body">
+        <div class="spread">
+          <h3 style="font-size:15px">{{ b.building_no }}</h3>
+          <span class="badge badge--neutral no-dot">{{ b.occupied_flats }}/{{ b.total_flats }} occupied</span>
+        </div>
+        <div class="cell-strong" style="margin:2px 0">{{ b.name }}</div>
+        <div class="muted small" style="margin-bottom:12px">{{ b.address|truncatechars:60 }}</div>
+        <div class="row">
+          <a class="btn btn--soft btn--sm" style="flex:1" href="{% url 'properties:rental_overview' %}?building={{ b.id }}"><svg><use href="#i-grid"/></svg> View units</a>
+          <a class="btn-icon" href="{% url 'properties:building_edit' b.id %}" title="Edit building"><svg><use href="#i-edit"/></svg></a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="modal-overlay" data-modal="addBuilding">
+  <div class="modal">
+    <div class="modal__head"><h3>Add a building</h3>
+      <button class="modal-close" data-close-modal><svg><use href="#i-x"/></svg></button></div>
+    <form method="post" action="{% url 'properties:buildings' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal__body stack">
+        <div class="form-grid">
+          <div class="field"><label>Building no <span class="req">*</span></label>{{ form.building_no }}</div>
+          <div class="field"><label>Name <span class="req">*</span></label>{{ form.name }}</div>
+        </div>
+        <div class="field"><label>Address</label>{{ form.address }}</div>
+        <div class="field"><label>Photo</label>{{ form.photo }}</div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn--primary"><svg><use href="#i-plus"/></svg> Add building</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll("[data-open-modal]").forEach(b => b.addEventListener("click", () => {
+    document.querySelector(`[data-modal="${b.dataset.openModal}"]`)?.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }));
+  document.querySelectorAll("[data-close-modal]").forEach(b => b.addEventListener("click", () =>
+    b.closest(".modal-overlay").classList.remove("is-open")));
+  document.querySelectorAll(".modal-overlay").forEach(ov => ov.addEventListener("click", e => {
+    if (e.target === ov) ov.classList.remove("is-open");
+  }));
+</script>
+{% endblock %}

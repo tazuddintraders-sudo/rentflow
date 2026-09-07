@@ -1,0 +1,13 @@
+{# Generic modal shell, populated by components.js openModal({title, body, footer}) #}
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" id="modalBox">
+    <div class="modal__head">
+      <h3 id="modalTitle">Confirm</h3>
+      <button class="modal-close" id="modalClose" aria-label="Close">
+        <svg><use href="#i-x"/></svg>
+      </button>
+    </div>
+    <div class="modal__body" id="modalBody"></div>
+    <div class="modal__foot" id="modalFooter"></div>
+  </div>
+</div>

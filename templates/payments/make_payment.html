@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Record Payment · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <a href="{% url 'payments:main' %}">Payment Centre</a><span class="sep">/</span>
+  <span class="current">Record Payment</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Record Payment &amp; Generate Invoice</h1>
+    <div class="sub">Select a unit — the occupant and due months are filled in automatically.</div>
+  </div>
+</div>
+
+<!-- Stepper -->
+<div class="stepper" id="stepper">
+  <div class="step is-active" data-step="1"><span class="step__num">1</span> Select unit</div>
+  <span class="step__line"></span>
+  <div class="step" data-step="2"><span class="step__num">2</span> Payment details</div>
+  <span class="step__line"></span>
+  <div class="step" data-step="3"><span class="step__num">3</span> Verify &amp; invoice</div>
+</div>
+
+<form id="paymentForm" autocomplete="off">
+  <div class="stack">
+
+    <!-- 1 · Selection + auto-fetch -->
+    <section class="card portal-section animate-in" data-section="1">
+      <div class="card__head">
+        <div class="sec-head">
+          <span class="sec-num">1</span>
+          <div><h3>Select the unit</h3><p>Building and flat are loaded from your properties.</p></div>
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="form-grid">
+          <div class="field">
+            <label>Building <span class="req">*</span></label>
+            <select class="input" id="buildingSelect">
+              <option value="">— Select building —</option>
+              {% for b in buildings %}
+                <option value="{{ b.id }}">{{ b.building_no }} — {{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Flat / Unit <span class="req">*</span></label>
+            <select class="input" id="flatSelect" disabled>
+              <option value="">Select a building first</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="autoFetch" style="display:none" class="mt-6">
+          <div class="divider"></div>
+          <div class="spread mb-4">
+            <h3 style="font-size:14px" class="muted">Occupant details <span class="badge badge--paid no-dot" style="margin-left:6px">Auto-fetched</span></h3>
+            <button type="button" class="btn-icon" id="refreshInfo" title="Re-fetch"><svg><use href="#i-refresh"/></svg></button>
+          </div>
+          <div class="autofill-grid">
+            <div class="field"><label>Occupant name</label><input class="input" id="afName" disabled></div>
+            <div class="field"><label>ID / NID</label><input class="input" id="afNid" disabled></div>
+            <div class="field"><label>Email</label><input class="input" id="afEmail" disabled></div>
+            <div class="field"><label>Phone</label><input class="input" id="afPhone" disabled></div>
+            <div class="field"><label>Monthly rent</label><input class="input" id="afRent" disabled></div>
+            <div class="field"><label>Payment date</label><input class="input" type="date" id="paymentDate" value="{{ today }}"></div>
+          </div>
+
+          <div id="dueAlert" class="mt-6" style="display:none"></div>
+        </div>
+
+        <div id="vacantNote" class="alert alert--warning mt-6" style="display:none">
+          <svg><use href="#i-home"/></svg>
+          <div>This unit is currently <b>vacant</b> — there is no active occupant to bill.
+            <a href="#" onclick="return false;">Assign an occupant</a> from the unit page first.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · Payment method -->
+    <section class="card portal-section animate-in" data-section="2" id="methodSection" style="opacity:.55">
+      <div class="card__head">
+        <div class="sec-head">
+          <span class="sec-num">2</span>
+          <div><h3>How was the rent paid?</h3><p>Choose a method and complete its details.</p></div>
+        </div>
+      </div>
+      <div class="card__body" data-method-group>
+        <div class="radio-cards mb-6">
+          <label class="radio-card">
+            <input type="radio" name="method" value="cash" data-method-toggle>
+            <span class="rc-body"><svg><use href="#i-cash"/></svg> Cash</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="method" value="bank" data-method-toggle>
+            <span class="rc-body"><svg><use href="#i-bank"/></svg> Bank Transfer</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="method" value="bkash" data-method-toggle>
+            <span class="rc-body"><svg><use href="#i-phone-call"/></svg> bKash</span>
+          </label>
+        </div>
+
+        <!-- Cash -->
+        <div class="method-panel" data-panel="cash">
+          <div class="form-grid">
+            <div class="field"><label>Received by <span class="req">*</span></label>
+              <input class="input" id="cashReceivedBy" placeholder="Name of the person who received the cash"></div>
+            <div class="field"><label>Date received <span class="req">*</span></label>
+              <input class="input" type="date" id="cashReceivedDate" value="{{ today }}"></div>
+          </div>
+        </div>
+
+        <!-- Bank -->
+        <div class="method-panel" data-panel="bank">
+          <div class="form-grid">
+            <div class="field"><label>Your bank (sender) <span class="req">*</span></label>
+              <select class="input" id="bankSender">
+                <option value="">Select bank</option>
+                {% for bank in banks %}<option>{{ bank }}</option>{% endfor %}
+              </select></div>
+            <div class="field"><label>Receiving bank</label>
+              <select class="input" id="bankReceiver">
+                {% for bank in banks %}{% if bank == 'City Bank Ltd.' %}<option selected>{{ bank }}</option>{% else %}<option>{{ bank }}</option>{% endif %}{% endfor %}
+              </select></div>
+            <div class="field"><label>Transaction reference <span class="req">*</span></label>
+              <input class="input" id="bankTxnRef" placeholder="Bank transaction / reference no."></div>
+            <div class="field"><label>Transfer date <span class="req">*</span></label>
+              <input class="input" type="date" id="bankTransferDate" value="{{ today }}"></div>
+            <div class="field"><label>Cheque no. <span class="muted">(optional)</span></label>
+              <input class="input" id="bankCheque" placeholder="If paid by cheque"></div>
+          </div>
+        </div>
+
+        <!-- bKash -->
+        <div class="method-panel" data-panel="bkash">
+          <div class="form-grid">
+            <div class="field"><label>bKash Transaction ID <span class="req">*</span></label>
+              <input class="input" id="bkashTxnId" placeholder="e.g. 9F4A2B7C8D"></div>
+            <div class="field"><label>Sender's bKash number <span class="req">*</span></label>
+              <input class="input" id="bkashSender" placeholder="01XXX-XXXXXX"></div>
+            <div class="field"><label>Transaction date &amp; time <span class="req">*</span></label>
+              <input class="input" type="datetime-local" id="bkashDatetime"></div>
+            <div class="field"><label>Transaction screenshot <span class="muted">(optional)</span></label>
+              <input class="input input-file" type="file" id="bkashShot" accept="image/*">
+              <div class="hint" id="bkashShotName"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="total-row mt-6">
+          <span class="lbl">Total to collect for selected month(s)</span>
+          <span class="val" id="totalAmount">৳0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Verify & generate -->
+    <section class="card portal-section animate-in" data-section="3" id="verifySection" style="opacity:.55">
+      <div class="card__head">
+        <div class="sec-head">
+          <span class="sec-num">3</span>
+          <div><h3>Verify &amp; generate invoice</h3><p>We check everything before the invoice is created.</p></div>
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="verify-box mb-4">
+          <button type="button" class="btn btn--soft" id="verifyBtn" disabled>
+            <svg><use href="#i-shield"/></svg> Auto-check
+          </button>
+          <div class="verify-result verify-pending" id="verifyResult">
+            Complete the steps above, then run the auto-check.
+          </div>
+          <span class="spinner spinner--dark" id="verifySpinner" style="display:none"></span>
+        </div>
+
+        <div id="invoiceBlock" style="display:none">
+          <div class="divider"></div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Send invoice to (email)</label>
+              <input class="input" id="invoiceEmail" type="email" placeholder="occupant@email.com">
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end">
+              <label class="checkbox">
+                <input type="checkbox" id="sendEmailCheck" checked>
+                Email the invoice PDF to the occupant
+              </label>
+            </div>
+          </div>
+          <div class="alert alert--info mt-4">
+            <svg><use href="#i-mail"/></svg>
+            <div>If email isn't configured, the invoice is still generated and saved — you can download or print it below.</div>
+          </div>
+          <button type="button" class="btn btn--accent btn--block mt-4" id="generateBtn" style="height:44px">
+            <svg><use href="#i-receipt"/></svg> Generate Invoice &amp; Send
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</form>
+
+<!-- Success screen (modal) -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="modal__body">
+      <div class="success-screen">
+        <div class="check-anim">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Payment recorded</h2>
+        <p id="successText">The invoice has been generated.</p>
+        <div class="success-receipt" id="successReceipt"></div>
+        <div class="row" style="justify-content:center;flex-wrap:wrap" id="successActions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/payment-logic.js' %}"></script>
+{% endblock %}

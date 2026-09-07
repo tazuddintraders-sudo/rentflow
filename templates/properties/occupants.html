@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Occupants · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <span class="current">Occupants</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Occupants</h1>
+    <div class="sub">Everyone currently or previously renting from you</div>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--primary" href="{% url 'properties:occupant_create' %}"><svg><use href="#i-plus"/></svg> Add Occupant</a>
+  </div>
+</div>
+
+<div class="card animate-in">
+  <form method="get" class="filterbar">
+    <div class="field search">
+      <label>Search occupants</label>
+      <div style="position:relative">
+        <input class="input" type="search" name="q" value="{{ q }}"
+               placeholder="Name, phone or ID number…" style="padding-left:36px">
+        <svg style="position:absolute;left:11px;top:11px;width:16px;height:16px;color:var(--ink-400)"><use href="#i-search"/></svg>
+      </div>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button class="btn btn--primary btn--sm" type="submit"><svg><use href="#i-search"/></svg> Search</button>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Name</th><th>Contact</th><th>ID</th><th>Current unit</th><th>Rent</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for o in occupants %}
+          <tr class="clickable" onclick="location.href='{% url 'properties:client_info' o.id %}'">
+            <td>
+              <div class="occupant-line">
+                {% if o.photo %}
+                  <img class="avatar avatar--sm" src="{{ o.photo.url }}" style="object-fit:cover" alt="">
+                {% else %}
+                  <span class="avatar avatar--sm">{{ o.name|slice:":2"|upper }}</span>
+                {% endif %}
+                <div>
+                  <div class="cell-strong">{{ o.name }}</div>
+                  <div class="cell-sub">{{ o.occupation|default:"Occupant" }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sub">{{ o.phone }}<br>{{ o.email|default:"—" }}</td>
+            <td class="cell-sub">{{ o.get_id_type_display }}<br>{{ o.nid_number|default:"—" }}</td>
+            <td>
+              {% if o.current_flat %}
+                <span class="badge badge--neutral no-dot">{{ o.current_flat.building.building_no }} · {{ o.current_flat.flat_no }}</span>
+              {% else %}
+                <span class="badge badge--vacant no-dot">No active unit</span>
+              {% endif %}
+            </td>
+            <td class="num mono">{% if o.active_occupancy %}৳{{ o.active_occupancy.rent_amount|floatformat:0 }}{% else %}—{% endif %}</td>
+            <td class="num"><a class="btn-icon" href="{% url 'properties:client_info' o.id %}"><svg><use href="#i-eye"/></svg></a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="table-empty">
+            <svg style="margin:0 auto 8px"><use href="#i-users"/></svg>
+            No occupants found. Add your first occupant to get started.
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

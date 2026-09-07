@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Dashboard · RentFlow{% endblock %}
+
+{% block content %}
+<!-- Greeting / quick actions -->
+{% now "H" as current_hour %}
+<section class="hero-strip animate-in">
+  <div>
+    <h2>Good {% if current_hour|add:"0" < 12 %}morning{% elif current_hour|add:"0" < 17 %}afternoon{% else %}evening{% endif %}, {{ request.user.get_username }}</h2>
+    <p>Here's how your properties are performing today.
+       {{ cards.occupied }} of {{ cards.total_flats }} units are occupied and
+       {{ cards.collection_pct }}% of this month's rent has been collected.</p>
+  </div>
+  <div class="hero-strip__actions">
+    <a class="btn btn--accent" href="{% url 'payments:make_payment' %}">
+      <svg><use href="#i-plus"/></svg> Record Payment
+    </a>
+    <a class="btn btn--ghost" href="{% url 'payments:manage' %}">
+      <svg><use href="#i-credit"/></svg> Payment History
+    </a>
+  </div>
+</section>
+
+<!-- Stat cards -->
+<section class="grid grid--4 mb-6 animate-in animate-in--1">
+  <div class="stat">
+    <div class="stat__top">
+      <span class="stat__label">Occupied Units</span>
+      <span class="stat__icon"><svg><use href="#i-door"/></svg></span>
+    </div>
+    <span class="stat__value">{{ cards.occupied }}<span class="stat__meta"> / {{ cards.total_flats }}</span></span>
+    <span class="stat__meta">{{ cards.total_occupants }} occupants on record · {{ cards.vacant }} vacant</span>
+  </div>
+
+  <div class="stat">
+    <div class="stat__top">
+      <span class="stat__label">Collected This Month</span>
+      <span class="stat__icon stat__icon--green"><svg><use href="#i-wallet"/></svg></span>
+    </div>
+    <span class="stat__value">৳{{ cards.received|floatformat:0|intcomma }}</span>
+    <div class="stat__bar"><i style="width: {{ cards.collection_pct }}%"></i></div>
+    <span class="stat__meta">Target ৳{{ cards.monthly_target|floatformat:0|intcomma }} · {{ cards.collection_pct }}%</span>
+  </div>
+
+  <div class="stat">
+    <div class="stat__top">
+      <span class="stat__label">Outstanding Dues</span>
+      <span class="stat__icon stat__icon--red"><svg><use href="#i-alert"/></svg></span>
+    </div>
+    <span class="stat__value">৳{{ cards.outstanding|floatformat:0|intcomma }}</span>
+    <span class="stat__meta" style="color:var(--red-700)">৳{{ cards.overdue_total|floatformat:0|intcomma }} overdue</span>
+  </div>
+
+  <div class="stat">
+    <div class="stat__top">
+      <span class="stat__label">Occupancy Rate</span>
+      <span class="stat__icon stat__icon--accent"><svg><use href="#i-target"/></svg></span>
+    </div>
+    <span class="stat__value">{{ cards.occupancy_rate }}%</span>
+    <div id="gaugeChart"></div>
+  </div>
+</section>
+
+<!-- Overdue alerts -->
+{% if overdue_rows %}
+<section class="card mb-6 animate-in animate-in--2">
+  <div class="card__head">
+    <div>
+      <h3>Overdue payments need attention</h3>
+      <div class="sub">{{ overdue_rows|length }} rent period{{ overdue_rows|length|pluralize }} past the due date</div>
+    </div>
+    <a class="btn btn--sm btn--ghost" href="{% url 'payments:manage' %}?status=overdue">View all</a>
+  </div>
+  <div class="card__body overdue-list" style="padding-top:6px">
+    {% for row in overdue_rows %}
+      <div class="overdue-row">
+        <div class="overdue-days"><b>{{ row.days_overdue }}</b>days late</div>
+        <div style="flex:1;min-width:0">
+          <div class="cell-strong">{{ row.occ.occupant.name }}</div>
+          <div class="cell-sub">{{ row.occ.flat.building.building_no }} · {{ row.occ.flat.flat_no }} · {{ row.label }}</div>
+        </div>
+        <div class="cell-strong mono">৳{{ row.rent|floatformat:0|intcomma }}</div>
+        <a class="btn btn--sm btn--soft" href="{% url 'payments:make_payment' %}?building={{ row.occ.flat.building_id }}&flat={{ row.occ.flat_id }}">
+          <svg><use href="#i-receipt"/></svg> Collect
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Analytics -->
+<section class="grid grid--2 mb-6">
+  <div class="card animate-in animate-in--2">
+    <div class="card__head">
+      <div>
+        <h3>Monthly collections</h3>
+        <div class="sub">Rent received over the last 6 months</div>
+      </div>
+      <span class="badge badge--neutral no-dot"><svg style="width:12px;height:12px"><use href="#i-trend"/></svg> Trend</span>
+    </div>
+    <div class="chart-card" id="barChart"></div>
+  </div>
+
+  <div class="card animate-in animate-in--3">
+    <div class="card__head">
+      <div>
+        <h3>This month's rent status</h3>
+        <div class="sub">Across {{ pie.paid|add:pie.pending|add:pie.overdue }} active tenancies</div>
+      </div>
+    </div>
+    <div class="chart-card" id="donutChart"></div>
+  </div>
+</section>
+
+<!-- Activity + schedule -->
+<section class="grid grid--2">
+  <div class="card animate-in animate-in--3">
+    <div class="card__head">
+      <h3>Recent payments</h3>
+      <a class="small" href="{% url 'payments:manage' %}">See history →</a>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Occupant</th><th>Unit</th><th>Period</th><th class="num">Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for p in recent_payments %}
+            <tr class="clickable" data-payment-row="{{ p.id }}">
+              <td>
+                <div class="occupant-line">
+                  <span class="avatar avatar--sm">{{ p.occupancy.occupant.name|first }}</span>
+                  <div>
+                    <div class="cell-strong">{{ p.occupancy.occupant.name }}</div>
+                    <div class="cell-sub">{{ p.invoice_number_display }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="cell-sub">{{ p.occupancy.flat.building.building_no }} · {{ p.occupancy.flat.flat_no }}</td>
+              <td class="cell-sub">{{ p.month_label }}</td>
+              <td class="num cell-strong mono">৳{{ p.amount|floatformat:0|intcomma }}</td>
+              <td><span class="badge badge--{{ p.status }}">{{ p.get_status_display }}</span></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="table-empty">No payments recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card animate-in animate-in--4">
+      <div class="card__head">
+        <h3>Due in the next 7 days</h3>
+        <span class="badge badge--due-soon no-dot">{{ upcoming|length }}</span>
+      </div>
+      <div class="card__body" style="padding-top:8px">
+        {% for u in upcoming %}
+          <div class="overdue-row" style="padding:9px 0">
+            <span class="badge badge--due-soon no-dot">{{ u.due_date|date:"d M" }}</span>
+            <div style="flex:1">
+              <div class="cell-strong">{{ u.occ.occupant.name }}</div>
+              <div class="cell-sub">{{ u.occ.flat }}</div>
+            </div>
+            <a class="btn-icon" title="Remind" href="mailto:{{ u.occ.occupant.email }}?subject=Rent reminder"><svg><use href="#i-send"/></svg></a>
+          </div>
+        {% empty %}
+          <p class="muted small" style="margin:6px 0">Nothing due in the coming week.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card animate-in animate-in--5">
+      <div class="card__head">
+        <h3>New occupants</h3>
+        <a class="small" href="{% url 'properties:occupants' %}">All occupants →</a>
+      </div>
+      <div class="card__body" style="padding-top:8px">
+        {% for o in new_occupants %}
+          <div class="overdue-row" style="padding:9px 0">
+            <span class="avatar avatar--sm">{{ o.name|first }}</span>
+            <div style="flex:1">
+              <a class="cell-strong" href="{{ o.get_absolute_url }}">{{ o.name }}</a>
+              <div class="cell-sub">Joined {{ o.created_at|date:"d M Y" }}</div>
+            </div>
+            {% if o.current_flat %}
+              <span class="badge badge--neutral no-dot">{{ o.current_flat.flat_no }}</span>
+            {% else %}
+              <span class="badge badge--vacant no-dot">No unit</span>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p class="muted small" style="margin:6px 0">No new occupants this month.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script type="application/json" data-chart="barChart" data-target="barChart">
+{
+  "bars": [
+    {% for c in collections %}
+    {"label": "{{ c.label }}", "value": {{ c.amount }}, "current": {% if forloop.last %}true{% else %}false{% endif %}, "tip": "{{ c.label }}: ৳{{ c.amount|floatformat:0|intcomma }}"} {% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+<script type="application/json" data-chart="donut" data-target="donutChart">
+{
+  "segments": [
+    {"label": "Paid", "value": {{ pie.paid }}, "color": "#219653"},
+    {"label": "Pending", "value": {{ pie.pending }}, "color": "#d49b24"},
+    {"label": "Overdue", "value": {{ pie.overdue }}, "color": "#d65353"}
+  ],
+  "center": {"big": "{{ pie.paid }}", "small": "paid this month"}
+}
+</script>
+<script type="application/json" data-chart="gauge" data-target="gaugeChart">
+{ "value": {{ cards.occupancy_rate }}, "label": "occupied" }
+</script>
+
+{% endblock %}

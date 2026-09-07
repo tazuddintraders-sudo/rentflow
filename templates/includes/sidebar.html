@@ -1,0 +1,52 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar__brand">
+    <span class="logo-mark">
+      <svg viewBox="0 0 32 32"><path d="M7 25V10l9-5 9 5v15" fill="none" stroke="#0e2547" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 25v-6h6v6" fill="none" stroke="#e87d32" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span>
+      <span class="brand-name">RentFlow</span><br>
+      <span class="brand-sub">Property Manager</span>
+    </span>
+  </div>
+
+  <nav class="sidebar__nav">
+    <div class="nav-section">Overview</div>
+    <a class="nav-link {% if section == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard:home' %}">
+      <svg><use href="#i-dashboard"/></svg> Dashboard
+    </a>
+
+    <div class="nav-section">Property</div>
+    <a class="nav-link {% if section == 'properties' and '/occupants/' not in request.path %}is-active{% endif %}" href="{% url 'properties:rental_overview' %}">
+      <svg><use href="#i-grid"/></svg> Rental Overview
+    </a>
+    <a class="nav-link {% if '/occupants/' in request.path %}is-active{% endif %}" href="{% url 'properties:occupants' %}">
+      <svg><use href="#i-users"/></svg> Occupants
+    </a>
+    <a class="nav-link {% if '/buildings/' in request.path %}is-active{% endif %}" href="{% url 'properties:buildings' %}">
+      <svg><use href="#i-building"/></svg> Buildings &amp; Units
+    </a>
+
+    <div class="nav-section">Finance</div>
+    <a class="nav-link {% if section == 'payments' and request.path == '/payments/' %}is-active{% endif %}" href="{% url 'payments:main' %}">
+      <svg><use href="#i-wallet"/></svg> Payment Centre
+    </a>
+    <a class="nav-link {% if '/payments/make/' in request.path %}is-active{% endif %}" href="{% url 'payments:make_payment' %}">
+      <svg><use href="#i-receipt"/></svg> Record Payment
+    </a>
+    <a class="nav-link {% if '/payments/history/' in request.path %}is-active{% endif %}" href="{% url 'payments:manage' %}">
+      <svg><use href="#i-credit"/></svg> Payment History
+    </a>
+
+    <div class="nav-section">Account</div>
+    <a class="nav-link" href="{% url 'profile' %}">
+      <svg><use href="#i-shield"/></svg> My Profile
+    </a>
+    <a class="nav-link" href="{% url 'logout' %}">
+      <svg><use href="#i-logout"/></svg> Sign Out
+    </a>
+  </nav>
+
+  <div class="sidebar__foot">
+    Signed in as<br><strong style="color:#c7d3e4">{{ request.user.get_username }}</strong>
+  </div>
+</aside>

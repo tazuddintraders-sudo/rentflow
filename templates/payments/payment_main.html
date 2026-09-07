@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Payment Centre · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <span class="current">Payment Centre</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Payment Centre</h1>
+    <div class="sub">Collect rent, generate invoices and review payment history</div>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--accent" href="{% url 'payments:make_payment' %}"><svg><use href="#i-plus"/></svg> New Invoice</a>
+  </div>
+</div>
+
+{% if overdue_occs %}
+<div class="alert alert--danger mb-6 animate-in">
+  <svg><use href="#i-alert"/></svg>
+  <div style="flex:1">
+    <span class="alert__title">{{ overdue_count }} tenanc{{ overdue_count|pluralize:"y,ies" }} with overdue rent</span>
+    ৳{{ overdue_total|floatformat:0|intcomma }} is overdue. The oldest unpaid period is
+    <b>{{ overdue_occs.0.oldest.label }}</b> for {{ overdue_occs.0.occ.occupant.name }}
+    ({{ overdue_occs.0.oldest.days_overdue }} days late).
+    <a href="{% url 'payments:make_payment' %}?building={{ overdue_occs.0.occ.flat.building_id }}&flat={{ overdue_occs.0.occ.flat_id }}" style="font-weight:700;text-decoration:underline">Collect now →</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="hub-grid mb-6">
+  <a class="hub-card animate-in" href="{% url 'payments:make_payment' %}">
+    <span class="hub-icon" style="background:var(--navy-50);color:var(--navy-700)"><svg><use href="#i-receipt"/></svg></span>
+    <h3>Record a payment</h3>
+    <p>Select a unit, auto-fetch the occupant, record cash, bank or bKash and generate the invoice PDF — emailed automatically.</p>
+    <span class="go">Start <svg><use href="#i-menu" style="display:none"/></svg> →</span>
+  </a>
+  <a class="hub-card animate-in animate-in--1" href="{% url 'payments:manage' %}">
+    <span class="hub-icon" style="background:var(--green-50);color:var(--green-700)"><svg><use href="#i-credit"/></svg></span>
+    <h3>Payment history</h3>
+    <p>Search and filter every payment by date, building, status or method. Download invoices and resend receipts.</p>
+    <span class="go">Open history →</span>
+  </a>
+  <a class="hub-card animate-in animate-in--2" href="{% url 'payments:manage' %}?status=pending">
+    <span class="hub-icon" style="background:var(--amber-50);color:var(--amber-700)"><svg><use href="#i-clock"/></svg></span>
+    <h3>Pending payments</h3>
+    <p>{{ pending_count }} payment record{{ pending_count|pluralize }} currently marked as pending. Review and confirm them.</p>
+    <span class="go">Review pending →</span>
+  </a>
+  <a class="hub-card animate-in animate-in--3" href="{% url 'payments:manage' %}?status=overdue">
+    <span class="hub-icon" style="background:var(--red-50);color:var(--red-700)"><svg><use href="#i-alert"/></svg></span>
+    <h3>Overdue warnings</h3>
+    <p>Flagged rent periods that have passed their due date, with days-late counters for quick follow-up.</p>
+    <span class="go">View overdue →</span>
+  </a>
+</div>
+
+<div class="grid grid--3">
+  <div class="stat animate-in">
+    <div class="stat__top"><span class="stat__label">Outstanding total</span>
+      <span class="stat__icon stat__icon--red"><svg><use href="#i-wallet"/></svg></span></div>
+    <span class="stat__value">৳{{ outstanding|floatformat:0|intcomma }}</span>
+    <span class="stat__meta">Unpaid rent across active tenancies</span>
+  </div>
+  <div class="stat animate-in animate-in--1">
+    <div class="stat__top"><span class="stat__label">Overdue</span>
+      <span class="stat__icon stat__icon--red"><svg><use href="#i-alert"/></svg></span></div>
+    <span class="stat__value">৳{{ overdue_total|floatformat:0|intcomma }}</span>
+    <span class="stat__meta">Past the due date</span>
+  </div>
+  <div class="stat animate-in animate-in--2">
+    <div class="stat__top"><span class="stat__label">Pending records</span>
+      <span class="stat__icon stat__icon--accent"><svg><use href="#i-clock"/></svg></span></div>
+    <span class="stat__value">{{ pending_count }}</span>
+    <span class="stat__meta">Payments awaiting confirmation</span>
+  </div>
+</div>
+{% endblock %}

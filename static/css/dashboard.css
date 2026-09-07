@@ -1,0 +1,43 @@
+/* ============================================================
+   RentFlow — dashboard
+   ============================================================ */
+
+.hero-strip {
+  position: relative; overflow: hidden;
+  border-radius: var(--r-lg);
+  background: linear-gradient(115deg, var(--navy-900) 0%, var(--navy-700) 55%, var(--navy-600) 100%);
+  color: #fff;
+  padding: 26px 28px;
+  margin-bottom: 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  flex-wrap: wrap;
+}
+.hero-strip::after {
+  content: ""; position: absolute; right: -60px; top: -80px; width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,125,50,.22), rgba(232,125,50,0) 65%);
+  pointer-events: none;
+}
+.hero-strip h2 { color: #fff; font-size: 20px; margin-bottom: 4px; }
+.hero-strip p { color: #b9c8dc; font-size: 13.5px; margin: 0; max-width: 520px; }
+.hero-strip .btn--accent { box-shadow: 0 6px 18px -6px rgba(232,125,50,.55); }
+.hero-strip__actions { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
+.hero-strip .btn--ghost { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #fff; }
+.hero-strip .btn--ghost:hover { background: rgba(255,255,255,.16); color: #fff; }
+
+.overdue-list .overdue-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 4px; border-bottom: 1px solid var(--line);
+}
+.overdue-list .overdue-row:last-child { border-bottom: 0; }
+.overdue-days {
+  width: 52px; flex: none; text-align: center;
+  background: var(--red-50); color: var(--red-700);
+  border-radius: var(--r-sm); padding: 6px 0;
+  font-weight: 700; font-size: 12px; line-height: 1.25;
+}
+.overdue-days b { display: block; font-size: 16px; }
+
+/* compact gauge inside stat card */
+#gaugeChart { margin-top: 2px; }
+#gaugeChart .gauge { width: 120px; height: auto; margin: 0 auto; display: block; }

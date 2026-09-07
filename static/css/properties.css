@@ -1,0 +1,74 @@
+/* ============================================================
+   RentFlow — properties / rental overview
+   ============================================================ */
+
+/* Unit cards */
+.unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+.unit-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  overflow: hidden; display: flex; flex-direction: column;
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  position: relative;
+}
+.unit-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--line-strong); }
+.unit-card__media { height: 120px; position: relative; overflow: hidden; background: var(--navy-100); }
+.unit-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.unit-card__media .media-fallback {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--navy-700), var(--navy-500));
+  color: rgba(255,255,255,.85);
+}
+.unit-card__media .media-fallback svg { width: 34px; height: 34px; }
+.unit-card__status {
+  position: absolute; top: 10px; left: 10px;
+}
+.unit-card__body { padding: 14px 16px 12px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.unit-card__title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.unit-card__title h3 { font-size: 15px; }
+.unit-card__title .rent { font-weight: 700; color: var(--navy-700); font-variant-numeric: tabular-nums; }
+.unit-card__meta { font-size: 12.5px; color: var(--ink-500); display: flex; align-items: center; gap: 7px; }
+.unit-card__meta svg { width: 14px; height: 14px; flex: none; }
+.unit-card__foot {
+  margin-top: auto; padding: 10px 16px; border-top: 1px solid var(--line);
+  display: flex; gap: 8px; background: var(--surface-muted);
+}
+.unit-card__foot .btn { flex: 1; }
+
+/* status stripe on left of card */
+.unit-card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--ink-400);
+}
+.unit-card.is-paid::before { background: var(--green-500); }
+.unit-card.is-due-soon::before { background: var(--navy-500); }
+.unit-card.is-overdue::before { background: var(--red-500); }
+.unit-card.is-vacant::before { background: var(--line-strong); }
+
+/* Flat detail */
+.detail-head {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 20px 22px; background: #fff; border: 1px solid var(--line);
+  border-radius: var(--r-md); margin-bottom: 18px;
+}
+.detail-head .icon-tile {
+  width: 52px; height: 52px; border-radius: 12px; background: var(--navy-50);
+  color: var(--navy-700); display: grid; place-items: center; flex: none;
+}
+.detail-head .icon-tile svg { width: 24px; height: 24px; }
+
+.profile-head { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.profile-photo {
+  width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+  background: var(--navy-800); color: #fff; display: grid; place-items: center;
+  font-size: 24px; font-weight: 700; flex: none; overflow: hidden;
+}
+
+.amenity-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--navy-50); color: var(--navy-700);
+  font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+}
+
+.occupant-line { display: flex; align-items: center; gap: 10px; }
+.occupant-line .avatar { width: 32px; height: 32px; font-size: 12px; }

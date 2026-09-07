@@ -1,0 +1,70 @@
+/* ============================================================
+   RentFlow design tokens
+   Deep navy · white · soft gray · controlled orange accents
+   ============================================================ */
+
+:root {
+  /* Brand */
+  --navy-900: #0b1f3d;
+  --navy-800: #0e2547;
+  --navy-700: #143156;
+  --navy-600: #1c3c64;
+  --navy-500: #2b5085;
+  --navy-100: #e7edf5;
+  --navy-50:  #f2f6fb;
+
+  --orange-600: #d96f28;
+  --orange-500: #e87d32;
+  --orange-400: #f2994a;
+  --orange-50:  #fdf3ea;
+
+  /* Neutrals */
+  --ink-900: #222a36;
+  --ink-700: #3d4756;
+  --ink-500: #6f798a;
+  --ink-400: #8b94a3;
+  --line: #e2e6ec;
+  --line-strong: #d3d9e2;
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --surface-muted: #f6f8fb;
+
+  /* Status */
+  --green-700: #1d7a4c;
+  --green-500: #219653;
+  --green-50:  #e9f6ef;
+  --amber-700: #9a6a12;
+  --amber-500: #d49b24;
+  --amber-50:  #fdf6e3;
+  --red-700:   #b23b3b;
+  --red-500:   #d65353;
+  --red-50:    #fcecec;
+  --blue-50:   #eaf1fb;
+  --blue-600:  #2b5085;
+
+  /* Typography */
+  --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-22: 22px;
+  --fs-28: 28px;
+
+  /* Shape — restrained radius, editorial not bubbly */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  /* Shadows — soft, low, purposeful */
+  --shadow-xs: 0 1px 2px rgba(14, 37, 71, 0.05);
+  --shadow-sm: 0 1px 3px rgba(14, 37, 71, 0.07), 0 1px 2px rgba(14, 37, 71, 0.05);
+  --shadow-md: 0 6px 18px -8px rgba(14, 37, 71, 0.18), 0 2px 6px -2px rgba(14, 37, 71, 0.08);
+  --shadow-lg: 0 18px 42px -14px rgba(14, 37, 71, 0.28);
+
+  /* Layout */
+  --sidebar-w: 248px;
+  --topbar-h: 64px;
+  --content-max: 1240px;
+}
