@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}My Profile · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <span class="current">My Profile</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head"><div><h1>My Profile</h1><div class="sub">Your RentFlow account</div></div></div>
+
+<div class="grid grid--sidebar">
+  <div class="card animate-in">
+    <div class="card__head"><h3>Account</h3></div>
+    <div class="card__body">
+      <div class="profile-head mb-4">
+        <span class="profile-photo">{{ request.user.get_username|slice:":2"|upper }}</span>
+        <div>
+          <div style="font-size:17px;font-weight:700">{{ request.user.get_full_name|default:request.user.get_username }}</div>
+          <div class="muted small">{{ request.user.email|default:"No email set" }}</div>
+        </div>
+      </div>
+      <dl class="kv">
+        <dt>Username</dt><dd>{{ request.user.get_username }}</dd>
+        <dt>Role</dt><dd>{% if request.user.is_superuser %}Administrator{% else %}Staff{% endif %}</dd>
+        <dt>Joined</dt><dd>{{ request.user.date_joined|date:"d M Y" }}</dd>
+        <dt>Last login</dt><dd>{{ request.user.last_login|date:"d M Y, H:i" }}</dd>
+      </dl>
+      <div class="alert alert--info mt-4">
+        <svg><use href="#i-key"/></svg>
+        <div>To change your password or manage staff accounts, use the built-in
+          <a href="/admin/" target="_blank">Django administration</a> (admins only).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card animate-in">
+    <div class="card__head"><h3>Desktop app</h3></div>
+    <div class="card__body">
+      <p class="small muted">RentFlow runs locally on this computer. Your database,
+        documents and invoices are stored in the <b>RentFlow_Data</b> folder next to the app.</p>
+      <dl class="kv">
+        <dt>Version</dt><dd>1.0</dd>
+        <dt>Database</dt><dd>SQLite (local)</dd>
+        <dt>Invoice engine</dt><dd>ReportLab PDF</dd>
+      </dl>
+      <a class="btn btn--ghost btn--block mt-4" href="{% url 'logout' %}"><svg><use href="#i-logout"/></svg> Sign out</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

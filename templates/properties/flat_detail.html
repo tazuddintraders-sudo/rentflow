@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ flat }} · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a><span class="sep">/</span>
+  <a href="{% url 'properties:rental_overview' %}">Rental Overview</a><span class="sep">/</span>
+  <span class="current">{{ flat.get_flat_type_display }} {{ flat.flat_no }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-head animate-in">
+  <span class="icon-tile"><svg><use href="#i-home"/></svg></span>
+  <div style="flex:1;min-width:200px">
+    <h1 style="font-size:20px">{{ flat.get_flat_type_display }} {{ flat.flat_no }}</h1>
+    <div class="muted small">{{ flat.building.building_no }} — {{ flat.building.name }}
+      {% if flat.level %} · {{ flat.level.name|default:flat.level.level_number }}{% endif %}
+      {% if flat.size_sqft %} · {{ flat.size_sqft }} sqft{% endif %}</div>
+  </div>
+  {% if occ %}
+    <span class="badge badge--paid">Occupied</span>
+    <a class="btn btn--accent" href="{% url 'payments:make_payment' %}?building={{ flat.building_id }}&flat={{ flat.id }}">
+      <svg><use href="#i-receipt"/></svg> Record Payment
+    </a>
+    <button class="btn btn--ghost" data-open-modal="endOcc"><svg><use href="#i-x"/></svg> End Occupancy</button>
+  {% else %}
+    <span class="badge badge--vacant">Vacant</span>
+    <button class="btn btn--primary" data-open-modal="startOcc"><svg><use href="#i-plus"/></svg> Assign Occupant</button>
+  {% endif %}
+  <a class="btn-icon" href="{% url 'properties:flat_edit' flat.id %}" title="Edit unit"><svg><use href="#i-edit"/></svg></a>
+</div>
+
+<div class="grid grid--sidebar">
+  <div class="stack">
+    {% if occ and dues %}
+      <div class="card animate-in">
+        <div class="card__head"><h3>Unpaid rent periods</h3>
+          <a class="btn btn--sm btn--accent" href="{% url 'payments:make_payment' %}?building={{ flat.building_id }}&flat={{ flat.id }}">Collect now</a>
+        </div>
+        <div class="card__body stack" style="gap:8px">
+          {% for d in dues %}
+            <div class="row" style="justify-content:space-between">
+              <div class="row">
+                {% if d.status == 'overdue' %}<span class="badge badge--overdue">{{ d.days_overdue }}d late</span>
+                {% elif d.status == 'due_soon' %}<span class="badge badge--due-soon">Due soon</span>
+                {% else %}<span class="badge badge--pending">Pending</span>{% endif %}
+                <span class="cell-strong">{{ d.label }}</span>
+              </div>
+              <span class="cell-strong mono">৳{{ d.rent|floatformat:0|intcomma }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="card animate-in">
+      <div class="card__head">
+        <h3>Payment history</h3>
+        <a class="small" href="{% url 'payments:manage' %}?q={{ flat.flat_no }}">View in history →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Invoice</th><th>Period</th><th>Date</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for p in payment_history %}
+              <tr class="clickable" data-payment-row="{{ p.id }}">
+                <td class="cell-sub">{{ p.invoice_number_display }}</td>
+                <td class="cell-strong">{{ p.month_label }}</td>
+                <td class="cell-sub">{{ p.payment_date|date:"d M Y" }}</td>
+                <td class="cell-sub">{{ p.get_method_display }}</td>
+                <td class="num cell-strong mono">৳{{ p.amount|floatformat:0|intcomma }}</td>
+                <td><span class="badge badge--{{ p.status }}">{{ p.get_status_display }}</span></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="table-empty">
+                <svg style="margin:0 auto 8px"><use href="#i-receipt"/></svg>
+                No payments recorded for this tenancy yet.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card animate-in">
+      <div class="card__head"><h3>Occupancy timeline</h3></div>
+      <div class="card__body">
+        <div class="timeline">
+          {% for o in history_occupancies %}
+            <div class="timeline__item {% if o.is_active %}is-current{% endif %}">
+              <div class="cell-strong">{{ o.occupant.name }}
+                {% if o.is_active %}<span class="badge badge--paid" style="margin-left:6px">Current</span>{% endif %}
+              </div>
+              <div class="timeline__date">{{ o.start_date|date:"d M Y" }} → {% if o.end_date %}{{ o.end_date|date:"d M Y" }}{% else %}present{% endif %}</div>
+            </div>
+          {% empty %}
+            <p class="muted small">No one has occupied this unit yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="stack">
+    {% if occ %}
+    <div class="card animate-in">
+      <div class="card__head"><h3>Current occupant</h3>
+        <a class="btn-icon" href="{% url 'properties:occupant_edit' occ.occupant_id %}" title="Edit"><svg><use href="#i-edit"/></svg></a>
+      </div>
+      <div class="card__body">
+        <div class="profile-head mb-4">
+          {% if occ.occupant.photo %}
+            <img class="profile-photo" src="{{ occ.occupant.photo.url }}" alt="">
+          {% else %}
+            <span class="profile-photo">{{ occ.occupant.name|slice:":2"|upper }}</span>
+          {% endif %}
+          <div>
+            <a href="{% url 'properties:client_info' occ.occupant_id %}" style="font-size:16px;font-weight:700">{{ occ.occupant.name }}</a>
+            <div class="muted small">{{ occ.occupant.occupation|default:"Occupant" }}</div>
+          </div>
+        </div>
+        <dl class="kv">
+          <dt>Phone</dt><dd>{{ occ.occupant.phone }}</dd>
+          {% if occ.occupant.alt_phone %}<dt>Alt. phone</dt><dd>{{ occ.occupant.alt_phone }}</dd>{% endif %}
+          <dt>Email</dt><dd>{{ occ.occupant.email|default:"—" }}</dd>
+          <dt>{{ occ.occupant.get_id_type_display }}</dt><dd>{{ occ.occupant.nid_number|default:"—" }}</dd>
+        </dl>
+        <a class="btn btn--soft btn--block mt-4" href="{% url 'properties:client_info' occ.occupant_id %}">
+          <svg><use href="#i-users"/></svg> Open full profile
+        </a>
+      </div>
+    </div>
+
+    <div class="card animate-in">
+      <div class="card__head"><h3>Lease details</h3></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Monthly rent</dt><dd class="mono">৳{{ occ.rent_amount|floatformat:0|intcomma }}</dd>
+          <dt>Advance / deposit</dt><dd class="mono">৳{{ occ.advance_amount|floatformat:0|intcomma }}</dd>
+          <dt>Lease started</dt><dd>{{ occ.start_date|date:"d M Y" }}</dd>
+          {% if occ.agreement_reference %}<dt>Agreement ref.</dt><dd>{{ occ.agreement_reference }}</dd>{% endif %}
+        </dl>
+        <button class="btn btn--ghost btn--block mt-4" data-open-modal="uploadDoc">
+          <svg><use href="#i-upload"/></svg> Upload document
+        </button>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card animate-in">
+      <div class="card__head"><h3>Unit details</h3></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Type</dt><dd>{{ flat.get_flat_type_display }}</dd>
+          <dt>Building</dt><dd>{{ flat.building.building_no }}</dd>
+          {% if flat.size_sqft %}<dt>Size</dt><dd>{{ flat.size_sqft }} sqft</dd>{% endif %}
+          <dt>Address</dt><dd>{{ flat.building.address|default:"—" }}</dd>
+        </dl>
+        {% if flat.amenities_list %}
+          <div class="mt-4" style="display:flex;flex-wrap:wrap;gap:6px">
+            {% for a in flat.amenities_list %}<span class="amenity-tag">{{ a }}</span>{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Start occupancy modal -->
+<div class="modal-overlay" data-modal="startOcc">
+  <div class="modal modal--lg">
+    <div class="modal__head"><h3>Assign occupant to {{ flat.flat_no }}</h3>
+      <button class="modal-close" data-close-modal><svg><use href="#i-x"/></svg></button></div>
+    <form method="post" action="{% url 'properties:occupancy_start' %}">
+      {% csrf_token %}
+      <div class="modal__body">
+        <input type="hidden" name="flat" value="{{ flat.id }}">
+        <div class="form-grid">
+          <div class="field span-2">
+            <label>Occupant <span class="req">*</span></label>
+            {{ occupancy_form.occupant }}
+            <div class="hint">Need someone new? <a href="{% url 'properties:occupant_create' %}" target="_blank">Add an occupant first</a>, then reopen this.</div>
+          </div>
+          <div class="field">
+            <label>Start date <span class="req">*</span></label>
+            <input class="input" type="date" name="start_date" value="{% now 'Y-m-d' %}" required>
+          </div>
+          <div class="field">
+            <label>Monthly rent <span class="req">*</span></label>
+            <input class="input" type="number" step="0.01" name="rent_amount" value="{{ flat.default_rent }}" required>
+          </div>
+          <div class="field">
+            <label>Advance / deposit</label>
+            <input class="input" type="number" step="0.01" name="advance_amount" value="0">
+          </div>
+          <div class="field">
+            <label>Agreement reference</label>
+            <input class="input" type="text" name="agreement_reference" placeholder="AGR-…">
+          </div>
+          <div class="field span-2">
+            <label>Notes</label>
+            <textarea class="input" name="notes" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn--primary"><svg><use href="#i-check"/></svg> Start occupancy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- End occupancy modal -->
+{% if occ %}
+<div class="modal-overlay" data-modal="endOcc">
+  <div class="modal">
+    <div class="modal__head"><h3>End occupancy</h3>
+      <button class="modal-close" data-close-modal><svg><use href="#i-x"/></svg></button></div>
+    <form method="post" action="{% url 'properties:occupancy_end' occ.id %}">
+      {% csrf_token %}
+      <div class="modal__body">
+        <p class="muted">This will mark <b>{{ occ.occupant.name }}</b> as no longer living in
+           <b>{{ flat.flat_no }}</b> from the date below. Their payment history is kept.</p>
+        <div class="field mt-4">
+          <label>Last day of occupancy <span class="req">*</span></label>
+          <input class="input" type="date" name="end_date" value="{% now 'Y-m-d' %}" required>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn--danger"><svg><use href="#i-check"/></svg> End occupancy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Upload document modal -->
+<div class="modal-overlay" data-modal="uploadDoc">
+  <div class="modal">
+    <div class="modal__head"><h3>Upload document</h3>
+      <button class="modal-close" data-close-modal><svg><use href="#i-x"/></svg></button></div>
+    <form method="post" action="{% url 'properties:document_upload' occ.occupant_id %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal__body stack">
+        <div class="field">
+          <label>Document type <span class="req">*</span></label>
+          {{ doc_form.document_type }}
+        </div>
+        <div class="field">
+          <label>Title <span class="req">*</span></label>
+          <input class="input" type="text" name="title" placeholder="e.g. NID front page" required>
+        </div>
+        <div class="field">
+          <label>File <span class="req">*</span></label>
+          <input class="input input-file" type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png,.webp">
+          <div class="hint">PDF or image. Stored securely in the occupant's record.</div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn--primary"><svg><use href="#i-upload"/></svg> Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Modal openers on this page use data-open-modal / data-close-modal
+  document.querySelectorAll("[data-open-modal]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const name = btn.dataset.openModal;
+      document.querySelector(`[data-modal="${name}"]`)?.classList.add("is-open");
+      document.body.style.overflow = "hidden";
+    });
+  });
+  document.querySelectorAll("[data-close-modal]").forEach(btn => {
+    btn.addEventListener("click", () => btn.closest(".modal-overlay").classList.remove("is-open"));
+  });
+  document.querySelectorAll(".modal-overlay").forEach(ov => {
+    ov.addEventListener("click", e => { if (e.target === ov) { ov.classList.remove("is-open"); document.body.style.overflow = ""; } });
+  });
+</script>
+{% endblock %}

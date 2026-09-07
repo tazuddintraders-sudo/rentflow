@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Rental Overview · RentFlow{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+  <a href="{% url 'dashboard:home' %}">Dashboard</a>
+  <span class="sep">/</span><span class="current">Rental Overview</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Rental Overview</h1>
+    <div class="sub">{{ cards|length }} unit{{ cards|length|pluralize }} shown · {{ occupied }} occupied</div>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn btn--ghost" href="{% url 'properties:occupant_create' %}"><svg><use href="#i-users"/></svg> Add Occupant</a>
+    <a class="btn btn--primary" href="{% url 'properties:flat_create' %}"><svg><use href="#i-plus"/></svg> Add Unit</a>
+  </div>
+</div>
+
+<div class="card mb-6 animate-in">
+  <form method="get" class="filterbar">
+    <div class="field search">
+      <label>Search</label>
+      <div style="position:relative">
+        <input class="input" type="search" name="q" value="{{ filters.q }}"
+               placeholder="Flat no, building or occupant…"
+               style="padding-left:36px">
+        <svg style="position:absolute;left:11px;top:11px;width:16px;height:16px;color:var(--ink-400)"><use href="#i-search"/></svg>
+      </div>
+    </div>
+    <div class="field">
+      <label>Building</label>
+      <select class="input" name="building">
+        <option value="">All buildings</option>
+        {% for b in buildings %}
+          <option value="{{ b.id }}" {% if filters.building == b.id|stringformat:"s" %}selected{% endif %}>{{ b.building_no }} — {{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select class="input" name="status">
+        <option value="">Any</option>
+        <option value="occupied" {% if filters.status == 'occupied' %}selected{% endif %}>Occupied</option>
+        <option value="vacant" {% if filters.status == 'vacant' %}selected{% endif %}>Vacant</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <select class="input" name="type">
+        <option value="">All types</option>
+        {% for val, label in flat_types %}
+          <option value="{{ val }}" {% if filters.type == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <div class="row">
+        <button class="btn btn--primary btn--sm" type="submit"><svg><use href="#i-search"/></svg> Filter</button>
+        <a class="btn btn--ghost btn--sm" href="{% url 'properties:rental_overview' %}">Reset</a>
+      </div>
+    </div>
+    <div class="field" style="margin-left:auto">
+      <label>&nbsp;</label>
+      <div class="view-toggle" id="viewToggle">
+        <button type="button" data-view="grid" class="{% if filters.view != 'list' %}is-active{% endif %}" title="Grid view"><svg><use href="#i-grid"/></svg></button>
+        <button type="button" data-view="list" class="{% if filters.view == 'list' %}is-active{% endif %}" title="List view"><svg><use href="#i-list"/></svg></button>
+      </div>
+    </div>
+  </form>
+
+  {% if cards %}
+    <div id="unitGrid" class="card__body unit-grid" style="display:grid">
+      {% for c in cards %}
+        {% with f=c.flat %}
+        <article class="unit-card is-{{ c.state }}">
+          <div class="unit-card__media">
+            {% if f.building.photo %}
+              <img src="{{ f.building.photo.url }}" alt="{{ f.building.name }}">
+            {% else %}
+              <span class="media-fallback">
+                <svg><use href="#i-building"/></svg>
+              </span>
+            {% endif %}
+            <span class="unit-card__status">
+              {% if c.state == 'vacant' %}
+                <span class="badge badge--vacant">Vacant</span>
+              {% elif c.state == 'overdue' %}
+                <span class="badge badge--overdue">Overdue</span>
+              {% elif c.state == 'due_soon' %}
+                <span class="badge badge--due-soon">Due soon</span>
+              {% elif c.state == 'paid' %}
+                <span class="badge badge--paid">Paid</span>
+              {% else %}
+                <span class="badge badge--pending">Pending</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="unit-card__body">
+            <div class="unit-card__title">
+              <h3>{{ f.get_flat_type_display }} {{ f.flat_no }}</h3>
+              <span class="rent">৳{{ f.current_rent|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="unit-card__meta">
+              <svg><use href="#i-building"/></svg>
+              {{ f.building.building_no }} — {{ f.building.name }}{% if f.level %} · {{ f.level.name|default:f.level.level_number }}{% endif %}
+            </div>
+            {% if c.occ %}
+              <div class="unit-card__meta">
+                <svg><use href="#i-users"/></svg>
+                {{ c.occ.occupant.name }}
+              </div>
+            {% else %}
+              <div class="unit-card__meta" style="color:var(--ink-400)">
+                <svg><use href="#i-door"/></svg> Available for occupancy
+              </div>
+            {% endif %}
+          </div>
+          <div class="unit-card__foot">
+            <a class="btn btn--ghost btn--sm" href="{{ f.get_absolute_url }}"><svg><use href="#i-eye"/></svg> Details</a>
+            {% if c.occ %}
+              <a class="btn btn--soft btn--sm" href="{% url 'payments:make_payment' %}?building={{ f.building_id }}&flat={{ f.id }}">
+                <svg><use href="#i-receipt"/></svg> Payment
+              </a>
+            {% endif %}
+          </div>
+        </article>
+        {% endwith %}
+      {% endfor %}
+    </div>
+
+    <div id="unitList" class="table-wrap" style="display:none">
+      <table class="table">
+        <thead>
+          <tr><th>Unit</th><th>Building</th><th>Type</th><th>Occupant</th><th class="num">Rent</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for c in cards %}
+            {% with f=c.flat %}
+            <tr class="clickable" onclick="location.href='{{ f.get_absolute_url }}'">
+              <td class="cell-strong">{{ f.flat_no }}</td>
+              <td class="cell-sub">{{ f.building.building_no }} — {{ f.building.name }}</td>
+              <td class="cell-sub">{{ f.get_flat_type_display }}</td>
+              <td>{% if c.occ %}{{ c.occ.occupant.name }}{% else %}<span class="muted">—</span>{% endif %}</td>
+              <td class="num cell-strong mono">৳{{ f.current_rent|floatformat:0|intcomma }}</td>
+              <td>
+                {% if c.state == 'vacant' %}<span class="badge badge--vacant">Vacant</span>
+                {% elif c.state == 'overdue' %}<span class="badge badge--overdue">Overdue</span>
+                {% elif c.state == 'due_soon' %}<span class="badge badge--due-soon">Due soon</span>
+                {% elif c.state == 'paid' %}<span class="badge badge--paid">Paid</span>
+                {% else %}<span class="badge badge--pending">Pending</span>{% endif %}
+              </td>
+              <td class="num"><a class="btn-icon" href="{{ f.get_absolute_url }}"><svg><use href="#i-eye"/></svg></a></td>
+            </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <svg><use href="#i-search"/></svg>
+      <h3>No units match your filters</h3>
+      <p>Try clearing the search or add a new unit to get started.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const toggle = document.getElementById("viewToggle");
+  const grid = document.getElementById("unitGrid");
+  const list = document.getElementById("unitList");
+  toggle?.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+    toggle.querySelectorAll("button").forEach(b => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    const isGrid = btn.dataset.view === "grid";
+    grid.style.display = isGrid ? "grid" : "none";
+    list.style.display = isGrid ? "none" : "block";
+  }));
+</script>
+{% endblock %}

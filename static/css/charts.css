@@ -1,0 +1,60 @@
+/* ============================================================
+   RentFlow — hand-built SVG charts (no external libraries,
+   works fully offline inside the desktop app)
+   ============================================================ */
+
+.chart-card { padding: 20px; }
+.chart-title { font-size: 15px; font-weight: 700; }
+.chart-sub { font-size: 12.5px; color: var(--ink-500); margin-top: 2px; }
+
+.chart-svg { width: 100%; height: auto; display: block; }
+
+/* Donut */
+.donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.donut { width: 168px; height: 168px; flex: none; position: relative; }
+.donut .donut-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.donut .donut-center b { font-size: 24px; letter-spacing: -0.02em; }
+.donut .donut-center span { font-size: 11.5px; color: var(--ink-500); }
+.donut-seg { transition: stroke-dasharray 1s cubic-bezier(.2,.8,.2,1), opacity .15s ease; }
+.donut-seg.is-dim { opacity: .25; }
+
+.legend { display: flex; flex-direction: column; gap: 10px; font-size: 13px; flex: 1; min-width: 140px; }
+.legend__row { display: flex; align-items: center; gap: 9px; cursor: default; }
+.legend__dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.legend__label { color: var(--ink-700); }
+.legend__value { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Bars */
+.bar-chart { display: flex; align-items: flex-end; gap: 14px; height: 190px; padding-top: 14px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+.bar {
+  width: 60%; max-width: 42px; min-height: 3px;
+  background: linear-gradient(180deg, var(--navy-500), var(--navy-700));
+  border-radius: 5px 5px 2px 2px;
+  position: relative;
+  transition: height .9s cubic-bezier(.2,.8,.2,1);
+}
+.bar--current { background: linear-gradient(180deg, var(--orange-400), var(--orange-600)); }
+.bar:hover { filter: brightness(1.08); }
+.bar__tip {
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--navy-900); color: #fff; font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .15s ease;
+}
+.bar:hover .bar__tip { opacity: 1; }
+.bar-label { font-size: 11.5px; color: var(--ink-500); font-weight: 700; }
+
+/* Sparkline */
+.spark { width: 100%; height: 56px; overflow: visible; }
+.spark-path { fill: none; stroke: var(--navy-600); stroke-width: 2.2; stroke-linecap: round;
+  stroke-dasharray: 600; stroke-dashoffset: 600; animation: draw 1.6s ease forwards; }
+.spark-area { fill: url(#sparkGrad); opacity: 0; animation: fadein .8s ease .8s forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes fadein { to { opacity: 1; } }
+
+/* Gauge */
+.gauge { width: 150px; margin: 0 auto; display: block; }
+.gauge-track { stroke: var(--navy-50); }
+.gauge-fill { stroke: url(#gaugeGrad); transition: stroke-dasharray 1.2s cubic-bezier(.2,.8,.2,1); stroke-linecap: round; }
+.gauge text { font-family: Arial, sans-serif; font-weight: 700; }

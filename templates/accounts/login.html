@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Sign in · RentFlow</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e2547'/%3E%3Cpath d='M9 23V11l7-4 7 4v12' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+  <style>
+    .auth { min-height: 100vh; display: grid; grid-template-columns: 1.05fr .95fr; }
+    .auth__visual {
+      position: relative; overflow: hidden;
+      background: var(--navy-900);
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 48px;
+    }
+    .auth__visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .42; }
+    .auth__visual::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(11,31,61,.25) 0%, rgba(11,31,61,.55) 55%, rgba(11,31,61,.92) 100%);
+    }
+    .auth__visual > * { position: relative; z-index: 1; }
+    .auth__brand { position: absolute; top: 40px; left: 48px; display: flex; align-items: center; gap: 12px; color: #fff; font-weight: 700; font-size: 20px; z-index: 2; }
+    .auth__brand .logo-mark { width: 38px; height: 38px; border-radius: 10px; background: #fff; display: grid; place-items: center; }
+    .auth__quote { color: #fff; max-width: 460px; }
+    .auth__quote h2 { color: #fff; font-size: 27px; line-height: 1.3; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .auth__quote p { color: #b9c8dc; font-size: 14.5px; line-height: 1.7; }
+    .auth__stats { display: flex; gap: 34px; margin-top: 26px; }
+    .auth__stats b { display: block; color: #fff; font-size: 22px; }
+    .auth__stats span { color: #8ba0bd; font-size: 12.5px; }
+
+    .auth__panel { display: grid; place-items: center; padding: 40px 28px; background: #fff; }
+    .auth__card { width: 100%; max-width: 372px; animation: fade-up .5s cubic-bezier(.2,.8,.2,1) both; }
+    .auth__card h1 { font-size: 24px; margin-bottom: 6px; }
+    .auth__card .sub { color: var(--ink-500); font-size: 14px; margin-bottom: 28px; }
+    .auth__card .field { margin-bottom: 16px; }
+    .auth__hint {
+      margin-top: 22px; padding: 12px 14px; border-radius: var(--r-md);
+      background: var(--navy-50); border: 1px solid var(--navy-100);
+      font-size: 12.5px; color: var(--navy-700); line-height: 1.6;
+    }
+    .auth__hint b { color: var(--navy-800); }
+    @media (max-width: 900px) {
+      .auth { grid-template-columns: 1fr; }
+      .auth__visual { display: none; }
+    }
+  </style>
+</head>
+<body>
+  {% include "includes/icons.html" %}
+  <div class="toast-stack" id="toastStack"></div>
+  <div class="auth">
+    <div class="auth__visual">
+      <img src="{% static 'images/auth-hero.jpg' %}" alt="">
+      <div class="auth__brand">
+        <span class="logo-mark">
+          <svg width="22" height="22" viewBox="0 0 32 32"><path d="M7 25V10l9-5 9 5v15" fill="none" stroke="#0e2547" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 25v-6h6v6" fill="none" stroke="#e87d32" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        RentFlow
+      </div>
+      <div class="auth__quote">
+        <h2>Every property, every payment, every invoice — in one calm place.</h2>
+        <p>RentFlow brings your buildings, occupants and rent collection together with automated invoices and a clear, auditable payment history.</p>
+        <div class="auth__stats">
+          <div><b>Automated</b><span>invoice generation</span></div>
+          <div><b>Real-time</b><span>due &amp; overdue tracking</span></div>
+          <div><b>Offline</b><span>runs on your desktop</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth__panel">
+      <div class="auth__card">
+        <h1>Welcome back</h1>
+        <p class="sub">Sign in to your RentFlow workspace.</p>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert--danger mb-4">
+            <svg><use href="#i-alert"/></svg>
+            <div>
+              <span class="alert__title">Could not sign in</span>
+              {{ form.non_field_errors|join:" " }}
+            </div>
+          </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="field">
+            <label for="id_username">Username</label>
+            <input class="input" type="text" name="username" id="id_username"
+                   placeholder="e.g. admin" autofocus autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="id_password">Password</label>
+            <input class="input" type="password" name="password" id="id_password"
+                   placeholder="Your password" autocomplete="current-password" required>
+          </div>
+          <button class="btn btn--primary btn--block mt-2" type="submit" style="height:42px">
+            Sign in
+            <svg><use href="#i-logout" style="transform:rotate(180deg)"/></svg>
+          </button>
+        </form>
+
+        <div class="auth__hint">
+          <b>Demo installation?</b> Sign in with username <b>admin</b> and password
+          <b>admin1234</b>. Change this password before real use.
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="{% static 'js/utils.js' %}"></script>
+  <script src="{% static 'js/components.js' %}"></script>
+</body>
+</html>

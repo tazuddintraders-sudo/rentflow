@@ -1,0 +1,19 @@
+<header class="topbar">
+  <button class="btn-icon topbar__menu" id="menuToggle" aria-label="Open menu">
+    <svg><use href="#i-menu"/></svg>
+  </button>
+  <div>
+    <div class="topbar__title">{{ page_title|default:"RentFlow" }}</div>
+  </div>
+  <div class="topbar__spacer"></div>
+  <a class="btn btn--accent btn--sm" href="{% url 'payments:make_payment' %}">
+    <svg><use href="#i-plus"/></svg> New Payment
+  </a>
+  <div class="topbar__user">
+    <span class="avatar">{{ request.user.get_username|slice:":2"|upper }}</span>
+    <span class="user-meta">
+      <span class="name">{{ request.user.get_full_name|default:request.user.get_username }}</span><br>
+      <span class="role">{% if request.user.is_superuser %}Administrator{% else %}Staff{% endif %}</span>
+    </span>
+  </div>
+</header>

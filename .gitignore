@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Django
+*.log
+*.sqlite3
+*.db
+rentflow.db
+staticfiles/
+
+# User data (media uploaded/generated at runtime) — keep folder structure only
+media/invoices/*
+media/documents/*
+media/profiles/*
+media/buildings/*
+media/payments/
+!media/**/.gitkeep
+
+# PyInstaller build output
+build/
+dist/
+*.spec.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
